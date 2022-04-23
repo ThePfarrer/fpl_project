@@ -1,0 +1,27 @@
+<!--@()-->
+@()
+@main("Fantasy Premier League") {
+  <h1>Welcome to Fantasy Football!</h1>
+
+<h2>Login</h2>
+
+<form method="post" action="@routes.HomeController.login">
+  <h3>Login</h3>
+  <br>
+  Username: <input type="text" name="username" id="username-login"></input>
+  <br>
+  Password: <input type="password" name="password" id="password-login"></input>
+  <br>
+  <input type="submit"></input>
+</form>
+
+<form method="post" action="@routes.HomeController.createUser">
+  <h3>Create User</h3>
+  <br>
+  Username: <input type="text" name="username" id="username-create"></input>
+  <br>
+  Password: <input type="password" name="password" id="password-create"></input>
+  <br>
+  <input type="submit"></input>
+</form>
+}
