@@ -6,13 +6,16 @@ import slick.model.ForeignKeyAction
 
 /** Table description of table users. Objects of this class serve as prototypes for rows in queries. */
 class UsersTable(tag: Tag) extends Table[Users](tag, "users") {
-  def * = (username, password) <> (Users.tupled, Users.unapply)
+  def * = (username, password, hasTeam) <> (Users.tupled, Users.unapply)
 
   /** Database column username SqlType(varchar), PrimaryKey */
   val username: Rep[String] = column[String]("username", O.PrimaryKey)
 
   /** Database column password SqlType(varchar) */
   val password: Rep[String] = column[String]("password")
+
+  /** Database column has_team SqlType(bool), Default(false) */
+  val hasTeam: Rep[Boolean] = column[Boolean]("has_team", O.Default(false))
 }
 
 /** Table description of table players. Objects of this class serve as prototypes for rows in queries. */
@@ -59,5 +62,22 @@ class UserTeamTable(tag: Tag) extends Table[UserTeam](tag, "user_team") {
 
   /** Uniqueness Index over (username,teamName) (database name user_team_username_team_name_key) */
   val index1 = index("user_team_username_team_name_key", (username, teamName), unique=true)
+}
+
+/** Table description of table user_team_players. Objects of this class serve as prototypes for rows in queries. */
+class UserTeamPlayersTable(tag: Tag) extends Table[UserTeamPlayers](tag, "user_team_players") {
+  lazy val users = TableQuery[UsersTable]
+
+  def * = (username, teamName, player) <> (UserTeamPlayers.tupled, UserTeamPlayers.unapply)
+
+  /** Database column username SqlType(varchar) */
+  val username: Rep[String] = column[String]("username")
+  /** Database column team_name SqlType(varchar) */
+  val teamName: Rep[String] = column[String]("team_name")
+  /** Database column player SqlType(varchar) */
+  val player: Rep[String] = column[String]("player")
+
+  /** Foreign key referencing Users (database name user_team_players_username_fkey) */
+  lazy val usersFk = foreignKey("user_team_players_username_fkey", username, users)(r => r.username, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
 }
 

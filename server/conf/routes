@@ -8,7 +8,15 @@ GET     /                           controllers.HomeController.index()
 POST	/v1/login						controllers.HomeController.login
 GET 	/v1/logout						controllers.HomeController.logout
 POST	/v1/signUp						controllers.HomeController.signUp
-# GET     /v1/playerList                 controllers.HomeController.playerList
+GET     /v1/playerList                 controllers.HomeController.getPlayers
+GET     /v1/playerList/:id                controllers.HomeController.getPlayersByPosition(id)
+GET     /v1/playerListByClub/:id                controllers.HomeController.getPlayersByClub(id)
+GET     /v1/playerListByClub2/:club/:pos                controllers.HomeController.getPlayersByClubAndPosition(club, pos)
+POST    /v1/createTeam                  controllers.HomeController.createTeam
+PUT    /v1/createTeam                  controllers.HomeController.changeTeamName
+PUT    /v1/addPlayer                  controllers.HomeController.addPlayerToTeam
+GET    /v1/getTeam/:id                  controllers.HomeController.getUserTeam(id)
+
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)

@@ -20,7 +20,8 @@ lazy val server = (project in file("server")).settings(commonSettings)
       "io.circe" %% "circe-generic" % "0.14.1",
       "io.circe" %% "circe-parser" % "0.14.1",
       "com.vmunier" %% "scalajs-scripts" % "1.2.0",
-      "com.github.jwt-scala" %% "jwt-play-json" % "9.0.5"
+      "com.github.jwt-scala" %% "jwt-play-json" % "9.0.5",
+      "io.circe" %% "circe-generic-extras" % "0.12.1"
     )
   )
   .enablePlugins(PlayScala)

@@ -33,13 +33,9 @@ create table if not exists user_team_players(
 username varchar not null,
 team_name varchar not null,
 player varchar not null,
-club varchar not null
---position varchar not null,
---foreign key (username) references users (username),
+foreign key (username) references users (username)
 --foreign key (team_name) references user_team (team_name),
---foreign key (player) references players (player_name),
---foreign key (club) references clubs (club_name),
---foreign key (position) references players (position)
+--foreign key (player) references players (player_name)
 );
 
 # --- !Downs
