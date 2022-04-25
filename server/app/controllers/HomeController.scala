@@ -1,23 +1,27 @@
 package controllers
 
-
-import javax.inject._
-//import play.api._
+import io.circe.generic.auto._
+import io.circe.parser._
+import io.circe.syntax._
 import play.api.mvc._
-import models.TaskListDatabaseModel
+import play.api.Logging
+import models._
+import dao.UsersDao
 
-import scala.concurrent.{ExecutionContext, Future}
+import javax.inject.{Inject, Singleton}
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
+import pdi.jwt.{JwtAlgorithm, JwtJson}
+
+import scala.util.Random
+
 
 /**
  * This controller creates an `Action` to handle HTTP requests to the
  * application's home page.
  */
 @Singleton
-class HomeController @Inject()(
-                                  val controllerComponents: ControllerComponents,
-                                  model: TaskListDatabaseModel
-                                )(implicit ec: ExecutionContext)
-  extends BaseController {
+class HomeController @Inject()(cc: ControllerComponents, userDao: UsersDao) extends AbstractController(cc) with Logging {
 
   /**
    * Create an Action to render an HTML page.
@@ -26,112 +30,60 @@ class HomeController @Inject()(
    * will be called when the application receives a `GET` request with
    * a path of `/`.
    */
-  def index() = Action { implicit request: Request[AnyContent] =>
-    Ok(views.html.index())
+
+  lazy val key = "secretKey"
+  lazy val algo: JwtAlgorithm = JwtAlgorithm.HS256
+  lazy val claim = s"""{"user":"user-${Random.nextInt(100)}"}"""
+  lazy val token: String = JwtJson.encode(claim, key, algo)
+
+  val recoverError: PartialFunction[Throwable, Result] = {
+    case e: Throwable =>
+      logger.error("Error while writing in the database", e)
+      InternalServerError("Cannot write in the database")
   }
 
-  //  def load = Action { implicit request =>
-  //    val usernameOption = request.session.get("username")
-  //    usernameOption.map { username =>
-  //      Ok(views.html.version2Main(routes.TaskList2.taskList().toString))
-  //    }.getOrElse(Ok(views.html.version2Main(routes.TaskList2.login().toString)))
-  //  }
-
-  def login = Action.async { implicit request =>
-    val postVals = request.body.asFormUrlEncoded
-    postVals.map { args =>
-      val username = args("username").head
-      val password = args("password").head
-      model.validateUser(username, password).map { ouserId =>
-        ouserId match {
-          case Some(_) => Redirect(routes.HomeController.playerList)
-          case None => Ok(s"LOL! You aint slick $password")
-        }
-      }
-    }.getOrElse(Future {
-      Ok("No user found")
-    })
-  }
-
-  def playerList = Action.async {implicit request =>
-    model.getPlayers.map{ players =>
-      Ok(views.html.playerList(players))
+  def index(): Action[AnyContent] = Action { request: Request[AnyContent] =>
+    val userOption = request.cookies.get("t")
+    userOption match {
+      case Some(_) => Ok(views.html.index())
+      case None => Redirect(routes.HomeController.login)
     }
   }
-  //  def taskList = Action { implicit request =>
-  //    val usernameOption = request.session.get("username")
-  //    usernameOption.map { username =>
-  //      Ok(views.html.taskList2(TaskListInMemoryModel.getTasks(username)))
-  //    }.getOrElse(Ok(views.html.index()))
-  //  }
 
-  //  def validate = Action { implicit request =>
-  //    val postVals = request.body.asFormUrlEncoded
-  //    postVals.map { args =>
-  //      val username = args("username").head
-  //      val password = args("password").head
-  //      if (TaskListInMemoryModel.validateUser(username, password)) {
-  //        Ok(views.html.taskList2(TaskListInMemoryModel.getTasks(username)))
-  //          .withSession("username" -> username, "csrfToken" -> play.filters.csrf.CSRF.getToken.get.value)
-  //      } else {
-  //        Ok(views.html.index())
-  //      }
-  //    }.getOrElse(Ok(views.html.index()))
-  //  }
+  def login: Action[AnyContent] = Action.async { request =>
+    val postVals = request.body.asJson.get.toString()
 
-  def createUser = Action.async { implicit request =>
-    val postVals = request.body.asFormUrlEncoded
-    postVals.map { args =>
-      val username = args("username").head
-      val password = args("password").head
-
-      model.createUser(username, password).map { ouserId =>
-        ouserId match {
-          case Some(_) => Ok(views.html.index())
-          case None => Ok(views.html.index())
+    decode[Users](postVals) match {
+      case Right(value) =>
+        userDao.getUser(value.username).map {
+          case None => BadRequest
+          case Some(user) if user.password == value.password =>
+            Redirect(routes.HomeController.index()).withCookies(Cookie("t", token))
+          case Some(_) => Unauthorized
         }
-      }
-    }.getOrElse(Future{Ok(views.html.index())})
+        
+      case Left(_) => Future.successful(BadRequest)
+    }
+
+  }
+  
+  def signUp: Action[AnyContent] = Action.async { request =>
+    val postVals = request.body.asJson.get.toString()
+
+    decode[Users](postVals) match {
+      case Right(value) =>
+        val futureInsert = userDao.signUp(value)
+        futureInsert.map(_ => Redirect(routes.HomeController.index()).withCookies(Cookie("t", token))).recover(recoverError)
+
+      case Left(_) => Future.successful(BadRequest)
+    }
+  }
+  
+  def logout: Action[AnyContent] = Action {
+    Redirect(routes.HomeController.index()).discardingCookies(DiscardingCookie("t"))
   }
 
-//  def createUser = Action.async { implicit request =>
-//
-//    withJsonBody[UserData] { ud => model.createUser(ud.username, ud.password).map { ouserId =>
-//      ouserId match {
-//        case Some(userid) =>
-//          Ok(Json.toJson(true))
-//            .withSession("username" -> ud.username, "userid" -> userid.toString, "csrfToken" -> play.filters.csrf.CSRF.getToken.map(_.value).getOrElse(""))
-//        case None =>
-//          Ok(Json.toJson(false))
-//      }
-//    } }
-//  }
-
-//  def delete = Action { implicit request =>
-//    val usernameOption = request.session.get("username")
-//    usernameOption.map { username =>
-//      val postVals = request.body.asFormUrlEncoded
-//      postVals.map { args =>
-//        val index = args("index").head.toInt
-//        TaskListInMemoryModel.removeTask(username, index);
-//        Ok(views.html.taskList2(TaskListInMemoryModel.getTasks(username)))
-//      }.getOrElse(Ok(views.html.index()))
-//    }.getOrElse(Ok(views.html.index()))
-//  }
-
-//  def addTask = Action { implicit request =>
-//    val usernameOption = request.session.get("username")
-//    usernameOption.map { username =>
-//      val postVals = request.body.asFormUrlEncoded
-//      postVals.map { args =>
-//        val task = args("task").head
-//        TaskListInMemoryModel.addTask(username, task);
-//        Ok(views.html.taskList2(TaskListInMemoryModel.getTasks(username)))
-//      }.getOrElse(Ok(views.html.index()))
-//    }.getOrElse(Ok(views.html.index()))
-//  }
-
-//  def logout = Action {
-//    Redirect(routes.TaskList2.load()).withNewSession
+//  def getPlayers: Action[AnyContent] = Action { request =>
+//    userDao
 //  }
 }

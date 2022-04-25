@@ -13,13 +13,14 @@ lazy val server = (project in file("server")).settings(commonSettings)
       guice,
       "org.scalatestplus.play" %% "scalatestplus-play" % "5.1.0" % Test,
       "com.typesafe.slick" %% "slick-codegen" % "3.3.3",
-      "org.postgresql" % "postgresql" % "42.3.3",
+      "org.postgresql" % "postgresql" % "42.3.4",
       "com.typesafe.play" %% "play-slick" % "5.0.0",
       "com.typesafe.play" %% "play-slick-evolutions" % "5.0.0",
       "com.dripower" %% "play-circe" % "2814.2",
       "io.circe" %% "circe-generic" % "0.14.1",
       "io.circe" %% "circe-parser" % "0.14.1",
-      "com.vmunier" %% "scalajs-scripts" % "1.2.0"
+      "com.vmunier" %% "scalajs-scripts" % "1.2.0",
+      "com.github.jwt-scala" %% "jwt-play-json" % "9.0.5"
     )
   )
   .enablePlugins(PlayScala)

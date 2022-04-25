@@ -5,7 +5,7 @@ object CodeGen extends App {
     "slick.jdbc.PostgresProfile", 
     "org.postgresql.Driver",
     "jdbc:postgresql://localhost/fpl",
-    "C:\\Users\\uokereke\\IdeaProjects\\fpl_project\\app",
-    "models", Some("postgres"), Some("password"), true, true
+    "/home/thepfarrer/Desktop/fpl_project/server/app",
+    "sql_models", Some("postgres"), Some("password"), true, true
   )
 }

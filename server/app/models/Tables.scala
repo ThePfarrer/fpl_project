@@ -1,23 +1,63 @@
 package models
-// AUTO-GENERATED Slick data model
-/** Stand-alone Slick data model for immediate use */
-object Tables extends {
-  val profile = slick.jdbc.PostgresProfile
-} with Tables
 
-/** Slick data model trait for extension, choice of backend or usage in the cake pattern. (Make sure to initialize this late.)
-    Each generated XXXXTable trait is mixed in this trait hence allowing access to all the TableQuery lazy vals.
-  */
-trait Tables extends ClubsTable with PlayersTable with UsersTable with UsersTeamPlayersTable {
-  val profile: slick.jdbc.JdbcProfile
-  import profile.api._
-  import slick.model.ForeignKeyAction
-  // NOTE: GetResult mappers for plain SQL are only generated for tables where Slick knows how to map the types of all columns.
-  import slick.jdbc.{GetResult => GR}
+import slick.jdbc.PostgresProfile.api._
+import slick.model.ForeignKeyAction
 
-  /** DDL for all tables. Call .create to execute. */
-  lazy val schema: profile.SchemaDescription = Clubs.schema ++ Players.schema ++ Users.schema ++ UsersTeamPlayers.schema
-  @deprecated("Use .schema instead of .ddl", "3.0")
-  def ddl = schema
+
+/** Table description of table users. Objects of this class serve as prototypes for rows in queries. */
+class UsersTable(tag: Tag) extends Table[Users](tag, "users") {
+  def * = (username, password) <> (Users.tupled, Users.unapply)
+
+  /** Database column username SqlType(varchar), PrimaryKey */
+  val username: Rep[String] = column[String]("username", O.PrimaryKey)
+
+  /** Database column password SqlType(varchar) */
+  val password: Rep[String] = column[String]("password")
+}
+
+/** Table description of table players. Objects of this class serve as prototypes for rows in queries. */
+class PlayersTable(tag: Tag) extends Table[Players](tag, "players") {
+  lazy val clubs = TableQuery[ClubsTable]
+
+  def * = (playerName, clubName, position) <> (Players.tupled, Players.unapply)
+
+  /** Database column player_name SqlType(varchar) */
+  val playerName: Rep[String] = column[String]("player_name")
+  /** Database column club_name SqlType(varchar) */
+  val clubName: Rep[String] = column[String]("club_name")
+  /** Database column position SqlType(varchar) */
+  val position: Rep[String] = column[String]("position")
+
+  /** Foreign key referencing Clubs (database name players_club_name_fkey) */
+  lazy val clubsFk = foreignKey("players_club_name_fkey", clubName, clubs)(r => r.clubName, onUpdate = ForeignKeyAction.NoAction, onDelete = ForeignKeyAction.NoAction)
+}
+
+/** Table description of table clubs. Objects of this class serve as prototypes for rows in queries. */
+class ClubsTable(tag: Tag) extends Table[Clubs](tag, "clubs") {
+  def * = (id, clubName) <> (Clubs.tupled, Clubs.unapply)
+
+  /** Database column id SqlType(serial), AutoInc */
+  val id: Rep[Int] = column[Int]("id", O.AutoInc)
+  /** Database column club_name SqlType(varchar), PrimaryKey */
+  val clubName: Rep[String] = column[String]("club_name", O.PrimaryKey)
 
 }
+
+/** Table description of table user_team. Objects of this class serve as prototypes for rows in queries. */
+class UserTeamTable(tag: Tag) extends Table[UserTeam](tag, "user_team") {
+  lazy val users = TableQuery[UsersTable]
+
+  def * = (username, teamName) <> (UserTeam.tupled, UserTeam.unapply)
+
+  /** Database column username SqlType(varchar) */
+  val username: Rep[String] = column[String]("username")
+  /** Database column team_name SqlType(varchar) */
+  val teamName: Rep[String] = column[String]("team_name")
+
+  /** Foreign key referencing Users (database name user_team_username_fkey) */
+  lazy val usersFk = foreignKey("user_team_username_fkey", username, users)(r => r.username, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
+
+  /** Uniqueness Index over (username,teamName) (database name user_team_username_team_name_key) */
+  val index1 = index("user_team_username_team_name_key", (username, teamName), unique=true)
+}
+
