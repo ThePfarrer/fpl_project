@@ -1,9 +1,7 @@
 package controllers
 
-import io.circe.generic.auto._
 import io.circe.parser._
 import io.circe.syntax._
-import io.circe._
 import play.api.mvc._
 import play.api.Logging
 import models._
@@ -16,8 +14,6 @@ import pdi.jwt.{JwtAlgorithm, JwtJson}
 import play.api.libs.circe.Circe
 
 import scala.util.Random
-
-
 
 
 /**
@@ -36,10 +32,11 @@ class HomeController @Inject()(cc: ControllerComponents, userDao: UsersDao, play
 
   import io.circe.generic.extras.auto._
   import io.circe.generic.extras.Configuration
+
   implicit val customConfig: Configuration = Configuration.default.withDefaults
 
 
-   val recoverError: PartialFunction[Throwable, Result] = {
+  val recoverError: PartialFunction[Throwable, Result] = {
     case e: Throwable =>
       logger.error("Error while writing in the database", e)
       InternalServerError("Cannot write in the database")
@@ -141,7 +138,11 @@ class HomeController @Inject()(cc: ControllerComponents, userDao: UsersDao, play
     playerDao.getPlayersByClubAndPosition(clubName, position).map { res => Ok(res.asJson) }
   }
 
-    def getUserTeam(userName: String): Action[AnyContent] = Action.async {
-      userDao.getTeam(userName).map{res => Ok(res.asJson)}
-    }
+  def getUserTeam(userName: String): Action[AnyContent] = Action.async {
+    userDao.getTeam(userName).map { res => Ok(res.asJson) }
+  }
+
+  def deletePlayerFromTeam(username: String, playerName: String): Action[AnyContent] = Action.async {
+    userDao.deletePlayer(username, playerName).map(_ => Ok)
+  }
 }
